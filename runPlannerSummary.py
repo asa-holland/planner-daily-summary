@@ -1,3 +1,8 @@
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+
 import pandas as pd
 from datetime import date, datetime, timedelta
 pd.set_option('display.max_columns', None)
@@ -22,8 +27,9 @@ def pre_process(infile):
     #  'Assigned To', 'Created By', 'Created Date', 'Start Date', 'Due Date',
     #  'Late', 'Completed Date', 'Completed By', 'Description',
     #  'Completed Checklist Items', 'Checklist Items', 'Labels']
+    # TODO: add functionality for Late items
 
-    required_columns = ['Task Name', 'Priority', 'Assigned To', 'Due Date', 'Late', 'Description']
+    required_columns = ['Task Name', 'Priority', 'Assigned To', 'Due Date', 'Description']
     df = pd.read_excel(infile, usecols=required_columns)
 
     print(df['Due Date'].head())
@@ -91,9 +97,19 @@ def format_final_result(dataframe):
 
     # export to excel file
     filename = f'Planner Daily Summary {today}.xlsx'
-    dataframe.to_excel(filename)
+    ordered_columns = ['Task Name', 'Priority', 'Assigned To', 'Description']
+    dataframe.to_excel(filename, index=False, columns=ordered_columns)
 
     # bold top row
+    wb = load_workbook(filename=filename)
+    ws = wb['Sheet1']
+    bold_font = Font(bold=True)
+
+    # Enumerate the cells in the second row
+    for cell in ws["1:1"]:
+        cell.font = bold_font
+
+    wb.save(filename=filename)
 
     return
 
