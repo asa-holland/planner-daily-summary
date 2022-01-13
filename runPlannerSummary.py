@@ -87,8 +87,11 @@ def post_processing(dataframe):
 
 def format_final_result(dataframe):
     print(dataframe)
+    today = str(date.today().strftime("%m_%d_%Y"))
 
     # export to excel file
+    filename = f'Planner Daily Summary {today}.xlsx'
+    dataframe.to_excel(filename)
 
     # bold top row
 
