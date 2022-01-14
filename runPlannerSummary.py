@@ -2,6 +2,7 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
+import os
 
 import pandas as pd
 from datetime import date, datetime, timedelta
@@ -71,6 +72,10 @@ def post_processing(dataframe):
     # Remove Due Date Columns
     post_processed_dataframe.drop('Due Date', 1)
 
+    post_processed_dataframe['Assigned To'] = post_processed_dataframe['Assigned To'].str.replace(' [\w]*;', ', ', regex=True)
+
+    post_processed_dataframe['Assigned To'] = post_processed_dataframe['Assigned To'].str.replace(' [\w]*$', '', regex=True)
+
     # TODO: remove populate Category column and drop Description column
 
     # Create custom sort order
@@ -97,6 +102,7 @@ def format_final_result(dataframe):
 
     # export to excel file
     filename = f'Planner Daily Summary {today}.xlsx'
+
     ordered_columns = ['Task Name', 'Priority', 'Assigned To', 'Description']
     dataframe.to_excel(filename, index=False, columns=ordered_columns)
 
@@ -105,9 +111,24 @@ def format_final_result(dataframe):
     ws = wb['Sheet1']
     bold_font = Font(bold=True)
 
-    # Enumerate the cells in the second row
+    # Enumerate the cells in the first row
     for cell in ws["1:1"]:
         cell.font = bold_font
+
+    # update column widths
+    column_widths = []
+    for row in ws.iter_rows():
+        for i, cell in enumerate(row):
+            if len(column_widths) > i:
+                if cell.value is not None:
+                    if len(cell.value) > column_widths[i]:
+                        column_widths[i] = len(cell.value)
+            else:
+                column_widths += [len(cell.value)]
+
+
+    for i, column_width in enumerate(column_widths, 1):  # ,1 to start at 1
+        ws.column_dimensions[get_column_letter(i)].width = column_width
 
     wb.save(filename=filename)
 
