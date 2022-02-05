@@ -2,7 +2,7 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
-import os
+import sys
 
 import pandas as pd
 from datetime import date, datetime, timedelta
@@ -29,6 +29,8 @@ def pre_process(infile):
     #  'Late', 'Completed Date', 'Completed By', 'Description',
     #  'Completed Checklist Items', 'Checklist Items', 'Labels']
     # TODO: add functionality for Late items
+
+    # check if file is open
 
     required_columns = ['Task Name', 'Priority', 'Assigned To', 'Due Date', 'Description']
     df = pd.read_excel(infile, usecols=required_columns)
@@ -127,5 +129,5 @@ def format_final_result(dataframe):
     return
 
 if __name__ == "__main__":
-    SAMPLE_FILEPATH = 'Project Workflow test.xlsx'
+    SAMPLE_FILEPATH = sys.argv[1]
     summarize_planner_export(SAMPLE_FILEPATH)
