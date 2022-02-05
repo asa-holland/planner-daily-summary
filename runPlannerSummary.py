@@ -33,35 +33,25 @@ def pre_process(infile):
     required_columns = ['Task Name', 'Priority', 'Assigned To', 'Due Date', 'Description']
     df = pd.read_excel(infile, usecols=required_columns)
 
-    print(df['Due Date'].head())
-    # "01/10/2022"
+    # remove items with no due date
+    df = df[df['Due Date'].notna()]
 
     # convert due date from sting to datetime
-    # df['Due Date'] = pd.to_datetime(df['Due Date']).apply(lambda x: datetime.strftime(x, '%y-%m-%d'))
-    # df['Due Date'] = df['Due Date'].dt.date
-    # df['Due Date'] = df['Due Date'].apply(lambda x: datetime.date(x.year, x.month, x.day))
+    df['Due Date'] = df['Due Date'].astype(str)
 
-    # set up string of today and tomorrow date
+    # filter to only the work items due today
     today = str(date.today().strftime("%m/%d/%Y"))
-    tomorrow = date.today() + timedelta(days=1)
-    tomorrow = tomorrow.strftime("%m/%d/%Y")
-
-    print(type(today), today)
-    print(type(tomorrow), tomorrow)
-
-    print(df["Due Date"].unique())
-
     due_today = df["Due Date"] == today
-    due_tomorrow = df["Due Date"] == tomorrow
-
-    # print(type(df["Due Date"][0]), df["Due Date"][0])
-    print(due_today.unique())
     pre_processed_df = df.loc[due_today]
 
-    print('HERE', df.loc[due_tomorrow])
+    # tomorrow = date.today() + timedelta(days=1)
+    # tomorrow = tomorrow.strftime("%m/%d/%Y")
+    # due_tomorrow = df["Due Date"] == tomorrow
 
-    # printCols(pre_processed_df)
-    return df
+
+    print('pritning pre-provessed', )
+    printCols(pre_processed_df)
+    return pre_processed_df
 
 
 def post_processing(dataframe):
@@ -72,8 +62,8 @@ def post_processing(dataframe):
     # Remove Due Date Columns
     post_processed_dataframe.drop('Due Date', 1)
 
+    # Clean up Assigned To column to only first names
     post_processed_dataframe['Assigned To'] = post_processed_dataframe['Assigned To'].str.replace(' [\w]*;', ', ', regex=True)
-
     post_processed_dataframe['Assigned To'] = post_processed_dataframe['Assigned To'].str.replace(' [\w]*$', '', regex=True)
 
     # TODO: remove populate Category column and drop Description column
@@ -91,7 +81,7 @@ def post_processing(dataframe):
     post_processed_dataframe = post_processed_dataframe.sort_values('urgency_order')
 
     # then by Priority using custom sort 'Urgent', 'Important', 'Medium', 'Low'
-    # post_processed_dataframe = post_processed_dataframe.sort_values('Priority')
+    post_processed_dataframe = post_processed_dataframe.sort_values('Priority')
 
     return post_processed_dataframe
 
@@ -103,7 +93,7 @@ def format_final_result(dataframe):
     # export to excel file
     filename = f'Planner Daily Summary {today}.xlsx'
 
-    ordered_columns = ['Task Name', 'Priority', 'Assigned To', 'Description']
+    ordered_columns = ['Task Name', 'Priority', 'Assigned To', 'Due Date', 'Description']
     dataframe.to_excel(filename, index=False, columns=ordered_columns)
 
     # bold top row
@@ -126,14 +116,16 @@ def format_final_result(dataframe):
             else:
                 column_widths += [len(cell.value)]
 
-
-    for i, column_width in enumerate(column_widths, 1):  # ,1 to start at 1
-        ws.column_dimensions[get_column_letter(i)].width = column_width
+    for i, column_width in enumerate(column_widths, 1):
+        if i == 1:
+            ws.column_dimensions[get_column_letter(i)].width = round(column_width)
+        else:
+            ws.column_dimensions[get_column_letter(i)].width = round(column_width * 1.2)
 
     wb.save(filename=filename)
 
     return
 
 if __name__ == "__main__":
-    SAMPLE_FILEPATH = 'Project Workflow.xlsx'
+    SAMPLE_FILEPATH = 'Project Workflow test.xlsx'
     summarize_planner_export(SAMPLE_FILEPATH)
