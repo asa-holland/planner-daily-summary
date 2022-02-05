@@ -31,6 +31,14 @@ def pre_process(infile):
     # TODO: add functionality for Late items
 
     # check if file is open
+    while True:  # repeat until the try statement succeeds
+        try:
+            myfile = open(infile, "r+")  # or "a+", whatever you need
+            myfile.close()
+            break  # exit the loop
+        except IOError:
+            input("Could not open file! Please close Excel. Press Enter to retry.")
+            # restart the loop
 
     required_columns = ['Task Name', 'Priority', 'Assigned To', 'Due Date', 'Description']
     df = pd.read_excel(infile, usecols=required_columns)
@@ -46,13 +54,11 @@ def pre_process(infile):
     due_today = df["Due Date"] == today
     pre_processed_df = df.loc[due_today]
 
+
     # tomorrow = date.today() + timedelta(days=1)
     # tomorrow = tomorrow.strftime("%m/%d/%Y")
     # due_tomorrow = df["Due Date"] == tomorrow
 
-
-    print('pritning pre-provessed', )
-    printCols(pre_processed_df)
     return pre_processed_df
 
 
@@ -62,7 +68,7 @@ def post_processing(dataframe):
     post_processed_dataframe = dataframe
 
     # Remove Due Date Columns
-    post_processed_dataframe.drop('Due Date', 1)
+    post_processed_dataframe.drop(columns='Due Date')
 
     # Clean up Assigned To column to only first names
     post_processed_dataframe['Assigned To'] = post_processed_dataframe['Assigned To'].str.replace(' [\w]*;', ', ', regex=True)
@@ -89,7 +95,6 @@ def post_processing(dataframe):
 
 
 def format_final_result(dataframe):
-    print(dataframe)
     today = str(date.today().strftime("%m_%d_%Y"))
 
     # export to excel file
@@ -125,6 +130,10 @@ def format_final_result(dataframe):
             ws.column_dimensions[get_column_letter(i)].width = round(column_width * 1.2)
 
     wb.save(filename=filename)
+    today = str(date.today().strftime("%m/%d/%Y"))
+
+    count = len(dataframe.index)
+    print(f'Summary created for {count} Planner tasks dated {today}.')
 
     return
 
